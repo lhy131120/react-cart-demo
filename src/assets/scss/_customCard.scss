@@ -10,6 +10,16 @@
 		aspect-ratio: 1;
 	}
 
+	// .btn {
+	// 	font-size: 0.725rem;
+	// }
+
+	@include media-breakpoint-down(xxl) {
+		.btn {
+			font-size: 0.725rem;
+		}
+	}
+
 	@include media-breakpoint-down(md) {
 		.card-title {
 			display: -webkit-box;
