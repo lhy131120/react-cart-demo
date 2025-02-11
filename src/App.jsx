@@ -451,7 +451,7 @@ const App = () => {
 						zIndex: 999,
 					}}
 				>
-					<OrbitProgress variant="spokes" color="#e91313" size="large" text="Loading" textColor="#eea031" />
+					<OrbitProgress variant="spokes" speedPlus="-3" easing="linear"  color={["#33CCCC", "#33CC36", "#B8CC33", "#FCCA00"]} size="large" text="Loading" textColor="#000000" />
 				</div>
 			</div>
 			{/* Modal */}
