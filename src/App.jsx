@@ -53,7 +53,7 @@ const App = () => {
 		try {
 			const res = await axios.get(`${API_BASE}/api/${API_PATH}/products/all`);
 			setProductArr([...res.data.products]);
-			console.log(res.data.products);
+			// console.log(res.data.products);
 		} catch (error) {
 			console.log(`Error Message: ${error}`);
 		}
@@ -64,6 +64,7 @@ const App = () => {
 	// Add Cart
 	const [qtySelect, setQtySelect] = useState(1);
 	const addCartItem = async (product_id, qty = 1) => {
+		// console.log(product_id, qty)
 		try {
 			const res = await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
 				data: {
@@ -108,13 +109,14 @@ const App = () => {
 	// Edit Carts
 	const editCartItem = async (cartId, product_id, qty) => {
 		try {
-			const res = await axios.put(`${API_BASE}/api/${API_PATH}/cart/${cartId}`, {
+			await axios.put(`${API_BASE}/api/${API_PATH}/cart/${cartId}`, {
 				data: {
 					product_id,
 					qty: Number(qty),
 				},
 			});
-			console.log(res.data);
+			// console.log(res.data.data);
+			alert(`產品更新成功`);
 			getCarts();
 		} catch (error) {
 			alert(`更新失敗: ${error.response.data.message}`);
@@ -127,7 +129,7 @@ const App = () => {
 	const getCarts = async () => {
 		try {
 			const res = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
-			console.log(res);
+			// console.log(res.data.data);
 			setCarts(res.data.data);
 		} catch (error) {
 			alert(`購物車取得失敗: ${error.response.data.message}`);
@@ -148,7 +150,37 @@ const App = () => {
 		register,
 		handleSubmit,
 		formState: { errors },
+		reset,
 	} = useForm();
+
+	const onSubmit = handleSubmit(async (data) => {
+		// console.log(data);
+		const { message, ...user } = data;
+		const userInfo = {
+			data: {
+				user: {
+					...user,
+					tel: `${user.telCode}-${user.telNum}`,
+				},
+				message,
+			},
+		};
+		// Check格式是否match API format
+		// console.log(`userInfo: `, userInfo);
+		try {
+			await checkout(userInfo);
+			await getCarts();
+			reset();
+			alert("訂單已送出");
+		} catch (error) {
+			console.log(`CheckOut Failed: `, error.response.data.message);
+		}
+	});
+
+	const checkout = async (data) => {
+		const res = await axios.post(`${API_BASE}/api/${API_PATH}/order`, data);
+		return res.data;
+	};
 
 	return (
 		<>
@@ -284,6 +316,129 @@ const App = () => {
 						</div>
 					</div>
 				)}
+				<hr />
+				<div className="container">
+					<div className="my-5 row justify-content-center">
+						<form onSubmit={onSubmit} className="col-md-6">
+							<div className="mb-3">
+								<label htmlFor="email" className="form-label">
+									Email
+								</label>
+								<input
+									{...register("email", {
+										required: "欄位必填",
+										pattern: {
+											value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+											message: "Email 格式錯誤",
+										},
+									})}
+									id="email"
+									name="email"
+									type="email"
+									className={`form-control ${errors.email && "is-invalid"}`}
+									placeholder="請輸入 Email"
+								/>
+								{errors.email && <div className="text-danger my-2">{errors.email.message}</div>}
+							</div>
+
+							<div className="mb-3">
+								<label htmlFor="name" className="form-label">
+									收件人姓名
+								</label>
+								<input
+									{...register("name", {
+										required: "欄位必填",
+									})}
+									id="name"
+									name="name"
+									type="text"
+									className={`form-control ${errors.name && "is-invalid"}`}
+									placeholder="請輸入姓名"
+								/>
+								{errors.name && <div className="text-danger my-2">{errors.name.message}</div>}
+							</div>
+
+							<div className="mb-3">
+								<label htmlFor="telCode" className="form-label">
+									收件人電話
+								</label>
+								<div className="row g-1">
+									<div className="col-md-3 mb-2 mb-md-0">
+										<input
+											{...register("telCode", {
+												required: "欄位必填",
+												maxLength: {
+													value: 3,
+													message: "國際區號最多只有3位",
+												},
+												pattern: {
+													value: /^\d{2,3}$/,
+													message: "最少有2位",
+												},
+											})}
+											id="telCode"
+											name="telCode"
+											type="text"
+											className={`form-control ${errors?.telCode && "is-invalid"}`}
+											placeholder="國際區號"
+										/>
+										{errors?.telCode && <div className="text-danger my-2">{errors.telCode?.message}</div>}
+									</div>
+									<div className="col d-none d-md-flex justify-content-center align-items-start">
+										<span>-</span>
+									</div>
+
+									<div className="col-md-8">
+										<input
+											{...register("telNum", {
+												required: "欄位必填",
+												pattern: {
+													value: /^\d{6,20}$/,
+													message: "輸入最少6個數字的有效電話",
+												},
+											})}
+											id="telNum"
+											name="telNum"
+											type="text"
+											className={`form-control ${errors.telNum && "is-invalid"}`}
+											placeholder={errors?.telNum ? `請輸入電話` : `${errors?.telNum?.message || ""}`}
+										/>
+										{errors.telNum && <div className="text-danger my-2">{errors?.telNum?.message}</div>}
+									</div>
+								</div>
+							</div>
+
+							<div className="mb-3">
+								<label htmlFor="address" className="form-label">
+									收件人地址
+								</label>
+								<input
+									{...register("address", {
+										required: "欄位必填",
+									})}
+									id="address"
+									name="address"
+									type="text"
+									className={`form-control ${errors.address && "is-invalid"}`}
+									placeholder="請輸入地址"
+								/>
+								{errors.name && <div className="text-danger my-2">{errors.name.message}</div>}
+							</div>
+
+							<div className="mb-3">
+								<label htmlFor="message" className="form-label">
+									留言
+								</label>
+								<textarea {...register("message")} id="message" className="form-control" cols="30" rows="10"></textarea>
+							</div>
+							<div className="text-end">
+								<button type="submit" className="btn btn-danger" onClick={() => checkout}>
+									送出訂單
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
 			</div>
 			{/* Modal */}
 			<div
