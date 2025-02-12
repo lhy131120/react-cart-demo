@@ -4,6 +4,9 @@ import { Modal } from "bootstrap";
 import { useForm } from "react-hook-form";
 import { OrbitProgress } from "react-loading-indicators";
 
+// CSS
+import "@splidejs/react-splide/css";
+
 // https://www.thenation.com/wp-content/uploads/2020/07/trump-virus-briefing-gt-img.jpg
 
 const API_BASE = import.meta.env.VITE_BASE_URL;
@@ -16,7 +19,7 @@ const App = () => {
 	const [isDisplayModalOpen, setIsDisplayModalOpen] = useState(false);
 	useEffect(() => {
 		new Modal(displayModal.current, {
-			backdrop: false,
+			keyboard: false,
 		});
 	}, []);
 
@@ -67,37 +70,35 @@ const App = () => {
 	// Add Cart
 	const [qtySelect, setQtySelect] = useState(1);
 	const addCartItem = async (product_id, isModal, qty = 1) => {
-    if(isModal) {
-      setIsModalLoading(true);
-    } else {
-      setLoadingStates(prev =>({
-        ...prev,
-        [product_id]: true
-      }))
-    }
+		isModal
+			? setIsModalLoading(true)
+			: setLoadingStates((prev) => ({
+					...prev,
+					[product_id]: true,
+			  }));
+
 		try {
-			const res = await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
+			await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
 				data: {
 					product_id,
 					qty: Number(qty),
 				},
 			});
-			console.log(res.data);
+
 			if (isModal) {
 				handleCloseProductModal();
 			}
+
 			getCarts();
 		} catch (error) {
 			alert(`加入失敗: ${error.response.data.message}`);
 		} finally {
-			if(isModal) {
-        setIsModalLoading(false);
-      } else {
-        setLoadingStates(prev =>({
-          ...prev,
-          [product_id]: false
-        }))
-      }
+			isModal
+				? setIsModalLoading(false)
+				: setLoadingStates((prev) => ({
+						...prev,
+						[product_id]: false,
+				  }));
 		}
 	};
 
@@ -182,7 +183,6 @@ const App = () => {
 	} = useForm();
 
 	const onSubmit = handleSubmit(async (data) => {
-		// console.log(data);
 		const { message, ...user } = data;
 		const userInfo = {
 			data: {
@@ -213,7 +213,7 @@ const App = () => {
 	// loading - Full Screen
 	const [isScreenLoading, setIsScreenLoading] = useState(false);
 	const [isModalLoading, setIsModalLoading] = useState(false);
-  const [loadingStates, setLoadingStates] = useState({});
+	const [loadingStates, setLoadingStates] = useState({});
 
 	return (
 		<>
@@ -337,7 +337,7 @@ const App = () => {
 																	aria-label=""
 																	aria-describedby="button-addon1"
 																	value={item.qty}
-                                  style={{ width: "1rem", padding: "0" }}
+																	style={{ width: "1rem", padding: "0" }}
 																/>
 																<button
 																	onClick={() => editCartItem(item.id, item.product_id, item.qty + 1)}
@@ -468,7 +468,7 @@ const App = () => {
 										})}
 										id="telNum"
 										name="telNum"
-										type="text"
+										type="tel"
 										className={`form-control ${errors.telNum && "is-invalid"}`}
 										placeholder="請輸入電話"
 									/>
@@ -507,7 +507,7 @@ const App = () => {
 						</div>
 					</form>
 				</div>
-				{/* Loading */}
+				{/* Full Screen Loading */}
 				{isScreenLoading && (
 					<div
 						className="d-flex justify-content-center align-items-center"
@@ -547,11 +547,17 @@ const App = () => {
 							</h1>
 							<button type="button" className="btn-close" onClick={() => handleCloseProductModal()}></button>
 						</div>
-						{tempProduct ? (
+						{tempProduct && (
 							<div className="modal-body">
-								<p>{tempProduct.id}</p>
-								<p>{tempProduct.category}</p>
-								<p>{tempProduct.title}</p>
+								<p>目錄: {tempProduct.category}</p>
+								<p>產品名稱: {tempProduct.title}</p>
+								<p>描述: {tempProduct.description}</p>
+								<p>
+									售價: ${tempProduct.price}{" "}
+									<span className="small">
+										<del>${tempProduct.origin_price}</del>
+									</span>
+								</p>
 								<hr />
 								<img
 									src={tempProduct.imageUrl}
@@ -580,8 +586,6 @@ const App = () => {
 									</select>
 								</div>
 							</div>
-						) : (
-							""
 						)}
 						<div className="modal-footer">
 							<button type="button" className="btn btn-secondary" onClick={() => handleCloseProductModal()}>
